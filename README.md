@@ -23,6 +23,7 @@ Custom hyperparameters in a textfile i.e. _"./configs/config.txt"_.
 A _results_ folder will contain a timestamp directory with the latest results.
 
 ### Datasets
+Store unzipped under directory ```./data```
 * MovieLens (smallest version available, with 100k ratings)(https://grouplens.org/datasets/movielens/100k/)
 
 ### Splitting

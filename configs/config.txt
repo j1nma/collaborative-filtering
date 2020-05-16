@@ -1,10 +1,6 @@
---dataset
-BreastCancer
---technique
-MDS
---components
-3
+--datapath
+data/ml-100k/u.data
 --seed
 1910299034
 --outdir
-results/breast-cancer-wisconsin/MDS/
+results/ml-100k/

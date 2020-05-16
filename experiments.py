@@ -6,12 +6,9 @@ import os
 import pandas as pd
 import sys
 import time
+from pathlib import Path
 from sklearn.datasets import load_iris, load_breast_cancer
 from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE, MDS
-from mpl_toolkits.mplot3d import Axes3D
-from pathlib import Path
 
 
 def log(logfile, s):
@@ -25,22 +22,10 @@ def log(logfile, s):
 def get_args_parser():
     parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
     parser.add_argument(
-        "-d",
-        "--dataset",
-        default="Iris",
-        help="Name of the dataset to use: Iris, BreastCancer."
-    )
-    parser.add_argument(
-        "-t",
-        "--technique",
-        default="PCA",
-        help="Name of the dimensionality reduction technique: PCA, tSNE, MDS."
-    )
-    parser.add_argument(
-        "-c",
-        "--components",
-        default=2,
-        help="Number of components to consider for PCA, tSNE: 2, 3."
+        "-dp",
+        "--datapath",
+        default="data/ml-100k/u.data",
+        help="Path of data folder. For example: data/ml-100k/u.data"
     )
     parser.add_argument(
         "-s",
@@ -74,102 +59,136 @@ def experiments(config_file):
 
     # Logging
     logfile = outdir + 'log.txt'
-
     log(logfile, "Directory " + outdir + " created.")
 
-    # Set dataset
-    if args.dataset == 'Iris':
-        dataset = load_iris()
-        dataset_name = "Iris"
-        original_labels = ['setosa', 'versicolour', 'virginica']
-    elif args.dataset == 'BreastCancer':
-        dataset = load_breast_cancer()
-        dataset_name = "Breast Cancer Wisconsin"
-        original_labels = ['malignant', 'benign']
-    else:
-        raise ("Dataset not found")
+    # Read dataset
+    feature_names = ["user_id", "movie_id", "rating", "timestamp"]
+    df = pd.read_csv(args.datapath, sep='\t', names=feature_names)
 
-    data = dataset.data
-    labels = dataset.target
+    # Set plot settings
+    plt.figure(figsize=(7 * 2 + 6, 12.5))
+    plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05, hspace=.01)
+    plt.style.use('dark_background')
+    plot_num = 1
 
-    # Add labels and feature names
-    df = pd.DataFrame(data, columns=dataset.feature_names)
-    df['label'] = labels
-    df['label'] = df['label'].apply(lambda i: str(i))
-    for i in range(0, len(original_labels)):
-        df['label'].replace(str(i), original_labels[i], inplace=True)
+    datasets = (
+        (3, load_iris(return_X_y=True), "Iris"),
+        (2, load_breast_cancer(return_X_y=True), "Breast Cancer"),
+        (2, noisy_circles, "Noisy Circles")
+    )
 
-    # Dataset analysis
-    log(logfile, 'Size of the data: {} and labels: {}'.format(data.shape, labels.shape))
-    log(logfile, 'Size of the reshaped dataframe: {}'.format(df.shape))
-    log(logfile, df.head())
-    log(logfile, df.tail())
+    # Traverse datasets
+    # High-level abstraction is from https://scikit-learn.org/stable/modules/clustering.html
+    for i, (n_clusters, dataset, dataset_name) in enumerate(datasets):
+        X, y = dataset
 
-    # Normalization of features
-    data = df.loc[:, dataset.feature_names].values
-    data = StandardScaler().fit_transform(data)
+        # Normalization of features for easier parameter selection
+        X = StandardScaler().fit_transform(X)
 
-    # Set number of components
-    n_components = int(args.components)
+        connectivity = kneighbors_graph(X, n_neighbors=10, include_self=False)
+        # connectivity = 0.5 * (connectivity + connectivity.T)  # Make connectivity symmetric
 
-    # Set technique
-    if args.technique == 'PCA':
-        pca = PCA(n_components=n_components)
-        data_transformed = pca.fit_transform(data)
-        transformed_df = pd.DataFrame(data=data_transformed, columns=['PC ' + str(i + 1) for i in range(n_components)])
-        log(logfile, 'Cumulative explained variation for {} principal components: {}'.format(n_components,
-                                                                                             np.sum(
-                                                                                                 pca.explained_variance_ratio_).round(
-                                                                                                 decimals=3)))
-    elif args.technique == 'tSNE':
-        time_start = time.time()
-        tsne = TSNE(n_components=n_components, n_iter=1000, random_state=int(args.seed))
-        data_transformed = tsne.fit_transform(data)
-        log(logfile, 't-SNE done! Time elapsed: {0:.3f} seconds'.format(time.time() - time_start))
-        transformed_df = pd.DataFrame(data=data_transformed, columns=['PC ' + str(i + 1) for i in range(n_components)])
+        average_linkage = cluster.AgglomerativeClustering(
+            linkage="average",
+            affinity="cityblock",
+            n_clusters=n_clusters,
+            connectivity=connectivity)
 
-    elif args.technique == 'MDS':
-        embedding = MDS(n_components=n_components)
-        data_transformed = embedding.fit_transform(data)
-        log(logfile, 'MDS transformation shape: {}'.format(data_transformed.shape))
-        transformed_df = pd.DataFrame(data=data_transformed, columns=['PC ' + str(i + 1) for i in range(n_components)])
+        ward_linkage = cluster.AgglomerativeClustering(
+            linkage="ward",
+            n_clusters=n_clusters)
 
-    else:
-        raise ("Technique not found")
+        complete_linkage = cluster.AgglomerativeClustering(
+            linkage="complete",
+            n_clusters=n_clusters)
 
-    log(logfile, transformed_df.tail())
+        single_linkage = cluster.AgglomerativeClustering(
+            linkage="single",
+            n_clusters=n_clusters)
+
+        k_means = cluster.KMeans(n_clusters=n_clusters)
+
+        gaussian_mixture = mixture.GaussianMixture(
+            n_components=n_clusters,
+            covariance_type='full')
+
+        # Set techniques
+        techniques = (
+            ('Agglomerative Avg', average_linkage),
+            ('Agglomerative Single', single_linkage),
+            ('Agglomerative Complete', complete_linkage),
+            ('Agglomerative Ward', ward_linkage),
+            ('kMeans', k_means),
+            ('GaussianMixture', gaussian_mixture),
+        )
+
+        for name, technique in techniques:
+            log(logfile, dataset_name + ", " + name)
+
+            time_start = time.time()
+
+            # Catch warnings related to kneighbors_graph
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    message="the number of connected components of the " +
+                            "connectivity matrix is [0-9]{1,2}" +
+                            " > 1. Completing it to avoid stopping the tree early.",
+                    category=UserWarning)
+                warnings.filterwarnings(
+                    "ignore",
+                    message="Graph is not fully connected, spectral embedding" +
+                            " may not work as expected.",
+                    category=UserWarning)
+                technique.fit(X)
+
+            time_stop = time.time()
+
+            # Predictions
+            if hasattr(technique, 'labels_'):
+                y_pred = technique.labels_.astype(np.int)
+            else:
+                y_pred = technique.predict(X)
+
+            # Entropy metric
+            true_cluster_labels = [y[get_cluster_indices(c, y_pred)] for c in range(n_clusters)]
+            overall_entropy = get_overall_entropy(true_cluster_labels, y.shape[0])
+
+            # F-Score metric
+            f1_score = metrics.f1_score(y, y_pred, average='weighted')
+
+            log(logfile, "\tOverall entropy: " + str(round(overall_entropy, 3)))
+            log(logfile, "\tF1 Score: " + str(round(f1_score, 3)))
+
+            # Plotting
+            plt.subplot(len(datasets), len(techniques), plot_num)
+            if i == 0:
+                plt.title("{}".format(name), size=15)
+
+            colors = np.array(list(islice(cycle(['#377eb8', '#ff7f00', '#4daf4a']), int(max(y_pred) + 1))))
+            colors = np.append(colors, ["#000000"])  # Add black color for outliers (if any)
+            plt.scatter(X[:, 0], X[:, 1], s=10, color=colors[y_pred], alpha=0.60)
+
+            plt.xlim(-2.5, 2.5)
+            plt.ylim(-2.5, 2.5)
+            plt.xticks(())
+            plt.yticks(())
+
+            plt.text(.15, .01, ('%.2fs' % (time_stop - time_start)).lstrip('0'),
+                     transform=plt.gca().transAxes, size=15,
+                     horizontalalignment='right')
+
+            plt.text(.99, .07, ('%.2f' % (overall_entropy)).lstrip('0'),
+                     transform=plt.gca().transAxes, size=15,
+                     horizontalalignment='right')
+            plt.text(.99, .01, ('%.2f' % (f1_score)).lstrip('0'),
+                     transform=plt.gca().transAxes, size=15,
+                     horizontalalignment='right')
+
+            plot_num += 1
 
     # Plotting
-    if n_components == 3:
-        fig = plt.figure(figsize=(10, 10))
-        ax = Axes3D(fig)
-        ax.set_zlabel('PC 3', fontsize=15)
-    elif n_components == 2:
-        plt.figure(figsize=(10, 10))
-
-    plt.xticks(fontsize=12)
-    plt.yticks(fontsize=14)
-    plt.xlabel('PC 1', fontsize=15)
-    plt.ylabel('PC 2', fontsize=15)
-
-    plt.title("{} of {} Dataset".format(args.technique, dataset_name), fontsize=20)
-    colors = ['r', 'g', 'b']
-    for label, color in zip(original_labels, colors):
-        indicesToKeep = df['label'] == label
-        if n_components == 3:
-            ax.scatter(transformed_df.loc[indicesToKeep, 'PC 1'],
-                       transformed_df.loc[indicesToKeep, 'PC 2'],
-                       transformed_df.loc[indicesToKeep, 'PC 3'], c=color, s=50)
-        else:
-            plt.scatter(transformed_df.loc[indicesToKeep, 'PC 1'],
-                        transformed_df.loc[indicesToKeep, 'PC 2'], c=color, s=50)
-
-    if args.dataset == 'Iris':
-        plt.legend(original_labels, prop={'size': 15}, loc="lower right")
-    else:
-        plt.legend(original_labels, prop={'size': 15}, loc="upper right")
-
-    plt.savefig(outdir + '{}_c={}.svg'.format(args.technique, n_components), format="svg")
+    plt.savefig(outdir + 'plot.png', bbox_inches='tight')
 
 
 if __name__ == "__main__":
