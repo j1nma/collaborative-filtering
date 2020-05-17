@@ -1,0 +1,224 @@
+Directory results/ml-1m/20200517_085137/ created.
+MSE train 11.06 MSE test 11.09
+Epoch 0/100 loss: 837.94
+MSE train 8.02 MSE test 8.08
+Epoch 1/100 loss: 565.28
+MSE train 6.29 MSE test 6.34
+Epoch 2/100 loss: 427.22
+MSE train 5.14 MSE test 5.19
+Epoch 3/100 loss: 342.74
+MSE train 4.33 MSE test 4.38
+Epoch 4/100 loss: 283.88
+MSE train 3.76 MSE test 3.8
+Epoch 5/100 loss: 243.02
+MSE train 3.33 MSE test 3.36
+Epoch 6/100 loss: 213.38
+MSE train 2.98 MSE test 3.02
+Epoch 7/100 loss: 190.3
+MSE train 2.7 MSE test 2.74
+Epoch 8/100 loss: 171.37
+MSE train 2.46 MSE test 2.51
+Epoch 9/100 loss: 155.73
+MSE train 2.26 MSE test 2.31
+Epoch 10/100 loss: 142.38
+MSE train 2.09 MSE test 2.15
+Epoch 11/100 loss: 131.03
+MSE train 1.95 MSE test 2.01
+Epoch 12/100 loss: 121.67
+MSE train 1.82 MSE test 1.89
+Epoch 13/100 loss: 113.62
+MSE train 1.71 MSE test 1.78
+Epoch 14/100 loss: 106.55
+MSE train 1.62 MSE test 1.69
+Epoch 15/100 loss: 100.34
+MSE train 1.53 MSE test 1.61
+Epoch 16/100 loss: 94.89
+MSE train 1.46 MSE test 1.54
+Epoch 17/100 loss: 90.08
+MSE train 1.39 MSE test 1.47
+Epoch 18/100 loss: 85.84
+MSE train 1.33 MSE test 1.4
+Epoch 19/100 loss: 81.95
+MSE train 1.28 MSE test 1.35
+Epoch 20/100 loss: 78.5
+MSE train 1.23 MSE test 1.3
+Epoch 21/100 loss: 75.36
+MSE train 1.18 MSE test 1.25
+Epoch 22/100 loss: 72.43
+MSE train 1.14 MSE test 1.21
+Epoch 23/100 loss: 69.72
+MSE train 1.1 MSE test 1.17
+Epoch 24/100 loss: 67.23
+MSE train 1.06 MSE test 1.13
+Epoch 25/100 loss: 65.03
+MSE train 1.03 MSE test 1.1
+Epoch 26/100 loss: 63.05
+MSE train 1.0 MSE test 1.07
+Epoch 27/100 loss: 61.19
+MSE train 0.97 MSE test 1.04
+Epoch 28/100 loss: 59.46
+MSE train 0.95 MSE test 1.01
+Epoch 29/100 loss: 57.87
+MSE train 0.93 MSE test 0.99
+Epoch 30/100 loss: 56.42
+MSE train 0.9 MSE test 0.97
+Epoch 31/100 loss: 55.09
+MSE train 0.88 MSE test 0.95
+Epoch 32/100 loss: 53.82
+MSE train 0.86 MSE test 0.92
+Epoch 33/100 loss: 52.61
+MSE train 0.85 MSE test 0.91
+Epoch 34/100 loss: 51.51
+MSE train 0.83 MSE test 0.89
+Epoch 35/100 loss: 50.51
+MSE train 0.82 MSE test 0.87
+Epoch 36/100 loss: 49.59
+MSE train 0.8 MSE test 0.86
+Epoch 37/100 loss: 48.7
+MSE train 0.79 MSE test 0.84
+Epoch 38/100 loss: 47.84
+MSE train 0.78 MSE test 0.83
+Epoch 39/100 loss: 47.04
+MSE train 0.76 MSE test 0.82
+Epoch 40/100 loss: 46.28
+MSE train 0.75 MSE test 0.8
+Epoch 41/100 loss: 45.57
+MSE train 0.74 MSE test 0.79
+Epoch 42/100 loss: 44.89
+MSE train 0.73 MSE test 0.78
+Epoch 43/100 loss: 44.26
+MSE train 0.72 MSE test 0.77
+Epoch 44/100 loss: 43.68
+MSE train 0.71 MSE test 0.76
+Epoch 45/100 loss: 43.14
+MSE train 0.71 MSE test 0.75
+Epoch 46/100 loss: 42.64
+MSE train 0.7 MSE test 0.75
+Epoch 47/100 loss: 42.15
+MSE train 0.69 MSE test 0.74
+Epoch 48/100 loss: 41.71
+MSE train 0.68 MSE test 0.73
+Epoch 49/100 loss: 41.28
+MSE train 0.68 MSE test 0.72
+Epoch 50/100 loss: 40.88
+MSE train 0.67 MSE test 0.72
+Epoch 51/100 loss: 40.5
+MSE train 0.67 MSE test 0.71
+Epoch 52/100 loss: 40.16
+MSE train 0.66 MSE test 0.71
+Epoch 53/100 loss: 39.82
+MSE train 0.65 MSE test 0.7
+Epoch 54/100 loss: 39.5
+MSE train 0.65 MSE test 0.69
+Epoch 55/100 loss: 39.19
+MSE train 0.65 MSE test 0.69
+Epoch 56/100 loss: 38.91
+MSE train 0.64 MSE test 0.68
+Epoch 57/100 loss: 38.63
+MSE train 0.64 MSE test 0.68
+Epoch 58/100 loss: 38.37
+MSE train 0.63 MSE test 0.67
+Epoch 59/100 loss: 38.12
+MSE train 0.63 MSE test 0.67
+Epoch 60/100 loss: 37.89
+MSE train 0.63 MSE test 0.67
+Epoch 61/100 loss: 37.67
+MSE train 0.62 MSE test 0.66
+Epoch 62/100 loss: 37.46
+MSE train 0.62 MSE test 0.66
+Epoch 63/100 loss: 37.26
+MSE train 0.62 MSE test 0.66
+Epoch 64/100 loss: 37.07
+MSE train 0.61 MSE test 0.65
+Epoch 65/100 loss: 36.89
+MSE train 0.61 MSE test 0.65
+Epoch 66/100 loss: 36.73
+MSE train 0.61 MSE test 0.65
+Epoch 67/100 loss: 36.57
+MSE train 0.61 MSE test 0.64
+Epoch 68/100 loss: 36.41
+MSE train 0.6 MSE test 0.64
+Epoch 69/100 loss: 36.27
+MSE train 0.6 MSE test 0.64
+Epoch 70/100 loss: 36.13
+MSE train 0.6 MSE test 0.64
+Epoch 71/100 loss: 35.99
+MSE train 0.6 MSE test 0.63
+Epoch 72/100 loss: 35.86
+MSE train 0.59 MSE test 0.63
+Epoch 73/100 loss: 35.73
+MSE train 0.59 MSE test 0.63
+Epoch 74/100 loss: 35.6
+MSE train 0.59 MSE test 0.63
+Epoch 75/100 loss: 35.48
+MSE train 0.59 MSE test 0.62
+Epoch 76/100 loss: 35.37
+MSE train 0.59 MSE test 0.62
+Epoch 77/100 loss: 35.26
+MSE train 0.58 MSE test 0.62
+Epoch 78/100 loss: 35.17
+MSE train 0.58 MSE test 0.62
+Epoch 79/100 loss: 35.07
+MSE train 0.58 MSE test 0.61
+Epoch 80/100 loss: 34.97
+MSE train 0.58 MSE test 0.61
+Epoch 81/100 loss: 34.88
+MSE train 0.58 MSE test 0.61
+Epoch 82/100 loss: 34.79
+MSE train 0.58 MSE test 0.61
+Epoch 83/100 loss: 34.7
+MSE train 0.58 MSE test 0.61
+Epoch 84/100 loss: 34.62
+MSE train 0.57 MSE test 0.6
+Epoch 85/100 loss: 34.53
+MSE train 0.57 MSE test 0.6
+Epoch 86/100 loss: 34.45
+MSE train 0.57 MSE test 0.6
+Epoch 87/100 loss: 34.38
+MSE train 0.57 MSE test 0.6
+Epoch 88/100 loss: 34.3
+MSE train 0.57 MSE test 0.6
+Epoch 89/100 loss: 34.23
+MSE train 0.57 MSE test 0.6
+Epoch 90/100 loss: 34.16
+MSE train 0.57 MSE test 0.59
+Epoch 91/100 loss: 34.09
+MSE train 0.57 MSE test 0.59
+Epoch 92/100 loss: 34.03
+MSE train 0.57 MSE test 0.59
+Epoch 93/100 loss: 33.96
+MSE train 0.56 MSE test 0.59
+Epoch 94/100 loss: 33.9
+MSE train 0.56 MSE test 0.59
+Epoch 95/100 loss: 33.84
+MSE train 0.56 MSE test 0.59
+Epoch 96/100 loss: 33.78
+MSE train 0.56 MSE test 0.59
+Epoch 97/100 loss: 33.72
+MSE train 0.56 MSE test 0.58
+Epoch 98/100 loss: 33.67
+MSE train 0.56 MSE test 0.58
+Epoch 99/100 loss: 33.61
+Test time: 0.0475
+MSE test: 0.583
+
+MovieLens 1M, User MSD
+Train time: 30.74
+Test time: 133.95
+MSE: 0.8522
+
+MovieLens 1M, User Pearson Baseline
+Train time: 61.22
+Test time: 117.39
+MSE: 0.8587
+
+MovieLens 1M, Item MSD
+Train time: 10.76
+Test time: 53.5
+MSE: 0.8380
+
+MovieLens 1M, Item Pearson Baseline
+Train time: 24.12
+Test time: 54.38
+MSE: 0.8597
+
