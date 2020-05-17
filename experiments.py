@@ -1,18 +1,18 @@
 import argparse
 import datetime
-import matplotlib.pyplot as plt
-import numpy as np
 import os
-import pandas as pd
 import sys
 import time
 from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from sklearn.metrics import mean_squared_error as MSE
+from sklearn.model_selection import train_test_split as sk_train_test_split
 from surprise import Dataset, KNNBasic, accuracy
 from surprise.model_selection import train_test_split
-
-import tensorflow as tf
-from sklearn.model_selection import train_test_split as sk_train_test_split
-from sklearn.metrics import mean_squared_error as MSE
 
 
 def log(logfile, s):
@@ -51,6 +51,7 @@ def get_args_parser():
 # "Recommender system on the Movielens dataset using an Autoencoder and Tensorflow in Python"
 # https://medium.com/@connectwithghosh/recommender-system-on-the-movielens-using-an-autoencoder-using-tensorflow-in-python-f13d3e8d600d
 ##
+# TODO: make autoencoder use same split as other algorithms
 def autoencoder(dataset, logfile, random_state=1910299034):
     # Save home path
     home = str(Path.home())
