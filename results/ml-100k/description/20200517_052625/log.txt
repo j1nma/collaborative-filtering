@@ -1,4 +1,4 @@
-Directory results/ml-100k/description/20200516_223621/ created.
+Directory results/ml-100k/description/20200517_052625/ created.
 Size of dataframe: (100000, 4)
    user_id  movie_id  rating  timestamp
 0      196       242       3  881250949
