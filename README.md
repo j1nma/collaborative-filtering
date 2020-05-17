@@ -5,11 +5,11 @@ This work does experiments with various collaborative filtering approaches. Spec
 
 - Item based filtering
 
-- One other model based filtering approach #TODO
+- Autoencoder NN
 
 Their performance is compared in two ways:
 
-- Effectiveness of the recommendation on a supplied training set.
+- Effectiveness of the recommendation on a supplied training set: MSE
 
 - Efficiency of the recommendation (i.e. runtime).
 
@@ -23,16 +23,15 @@ Custom hyperparameters in a textfile i.e. _"./configs/config.txt"_.
 A _results_ folder will contain a timestamp directory with the latest results.
 
 ### Datasets
-Store unzipped under directory ```./data```
-* MovieLens (smallest version available, with 100k ratings)(https://grouplens.org/datasets/movielens/100k/)
+* MovieLens (with 100k and 1m ratings)(https://grouplens.org/datasets/movielens/100k/)
 
 ### Splitting
 80:20 training:test set, after shuffling the data. 
 
 ### Techniques
-* TODO
-* TODO
-* TODO
+* User-based kNN (k=40)
+* Item-based kNN (k=40)
+* Autoencoder NN
 
 ### Metrics
 For evaluation of effectiveness, MSE.
