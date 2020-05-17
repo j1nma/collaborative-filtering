@@ -7,8 +7,12 @@ import pandas as pd
 import sys
 import time
 from pathlib import Path
-from sklearn.datasets import load_iris, load_breast_cancer
-from sklearn.preprocessing import StandardScaler
+from surprise import Dataset, KNNBasic, accuracy
+from surprise.model_selection import train_test_split
+
+import tensorflow as tf
+from sklearn.model_selection import train_test_split as sk_train_test_split
+from sklearn.metrics import mean_squared_error as MSE
 
 
 def log(logfile, s):
@@ -22,10 +26,10 @@ def log(logfile, s):
 def get_args_parser():
     parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
     parser.add_argument(
-        "-dp",
-        "--datapath",
-        default="data/ml-100k/u.data",
-        help="Path of data folder. For example: data/ml-100k/u.data"
+        "-ds",
+        "--dataset",
+        default="ml-100k",
+        help="MovieLens dataset: 'ml-100k' or 'ml-1m'"
     )
     parser.add_argument(
         "-s",
@@ -42,6 +46,109 @@ def get_args_parser():
     return parser
 
 
+###
+# Autoencoder idea by Soumya Ghosh.
+# "Recommender system on the Movielens dataset using an Autoencoder and Tensorflow in Python"
+# https://medium.com/@connectwithghosh/recommender-system-on-the-movielens-using-an-autoencoder-using-tensorflow-in-python-f13d3e8d600d
+##
+def autoencoder(dataset, logfile, random_state=1910299034):
+    # Save home path
+    home = str(Path.home())
+
+    # Hyperparameters
+    hidden_layer_nodes = 32
+    learn_rate = 0.001
+
+    # Load the MovieLens (download it if needed)
+    if dataset == 'ml-100k':
+        datafile = 'u.data'
+        input_layer_nodes = 1682
+        output_layer_nodes = input_layer_nodes
+        ratings = pd.read_csv('{}/.surprise_data/{}/{}/{}'.format(home, dataset, dataset, datafile), sep="\t",
+                              header=None,
+                              engine='python')
+        batch_size = 20
+        epochs = 200
+    else:
+        datafile = 'ratings.dat'
+        input_layer_nodes = 3706
+        output_layer_nodes = input_layer_nodes
+        ratings = pd.read_csv('{}/.surprise_data/{}/{}/{}'.format(home, dataset, dataset, datafile), sep="::",
+                              header=None,
+                              engine='python')
+        batch_size = 80
+        epochs = 100
+
+    # Create DataFrame without timestamps
+    ratings_pivot = pd.pivot_table(ratings[[0, 1, 2]], values=2, index=0, columns=1).fillna(0)
+
+    # 80-20 split
+    X_train, X_test = sk_train_test_split(ratings_pivot, test_size=0.2, random_state=random_state)
+
+    # Initialize weights
+    hidden_layer_weights = {
+        'weights': tf.Variable(tf.random_normal([input_layer_nodes + 1, hidden_layer_nodes], seed=random_state))}
+    output_layer_weights = {
+        'weights': tf.Variable(tf.random_normal([hidden_layer_nodes + 1, output_layer_nodes], seed=random_state))}
+
+    # Set input placeholder
+    input_layer = tf.placeholder('float', [None, input_layer_nodes])
+
+    # Add bias to input
+    bias = tf.fill([tf.shape(input_layer)[0], 1], 1.0)
+    input_layer_concat = tf.concat([input_layer, bias], 1)
+
+    # Forward and activate with Sigmoid
+    hidden_activations = tf.nn.sigmoid(tf.matmul(input_layer_concat, hidden_layer_weights['weights']))
+
+    # Add bias
+    bias = tf.fill([tf.shape(hidden_activations)[0], 1], 1.0)
+    hidden_activations = tf.concat([hidden_activations, bias], 1)
+
+    # Forward for final output
+    output_layer = tf.matmul(hidden_activations, output_layer_weights['weights'])
+
+    # Set output placeholder
+    output_true = tf.placeholder('float', [None, output_layer_nodes])
+
+    # Loss
+    mse_loss = tf.reduce_mean(tf.square(output_layer - output_true))
+
+    # Optimizer
+    optimizer = tf.train.AdamOptimizer(learn_rate).minimize(mse_loss)
+
+    # Tensorflow session initialization
+    init = tf.global_variables_initializer()
+    sess = tf.Session()
+    sess.run(init)
+
+    # Running model
+    for epoch in range(epochs):
+        epoch_loss = 0
+
+        for i in range(int(X_train.shape[0] / batch_size)):
+            batch_X = X_train[i * batch_size: (i + 1) * batch_size]
+            _, c = sess.run([optimizer, mse_loss], feed_dict={input_layer: batch_X, output_true: batch_X})
+            epoch_loss += c
+
+        output_train = sess.run(output_layer, feed_dict={input_layer: X_train})
+        output_test = sess.run(output_layer, feed_dict={input_layer: X_test})
+
+        log(logfile, 'MSE train ' + str(round(MSE(output_train, X_train), 2)) + ' MSE test ' + str(
+            round(MSE(output_test, X_test), 2)))
+        log(logfile, 'Epoch ' + str(epoch) + '/' + str(epochs) + ' loss: ' + str(round(epoch_loss, 2)))
+
+    # Final test
+    time_start = time.time()
+    output_test = sess.run(output_layer, feed_dict={input_layer: X_test})
+    time_stop = time.time()
+    runtime = round(time_stop - time_start, 4)
+    log(logfile, 'Test time: {0:f}'.format(runtime).strip('0'))
+    mse = round(MSE(output_test, X_test), 3)
+    log(logfile, 'MSE test: ' + str(mse) + '\n')
+    return [mse, runtime]
+
+
 def experiments(config_file):
     args = get_args_parser().parse_args(['@' + config_file])
 
@@ -50,7 +157,7 @@ def experiments(config_file):
 
     # Construct output directory
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    outdir = args.outdir + timestamp + '/'
+    outdir = args.outdir + str(args.dataset) + "/" + timestamp + '/'
 
     # Create results directory
     outdir_path = Path(outdir)
@@ -61,133 +168,85 @@ def experiments(config_file):
     logfile = outdir + 'log.txt'
     log(logfile, "Directory " + outdir + " created.")
 
-    # Read dataset
-    feature_names = ["user_id", "movie_id", "rating", "timestamp"]
-    df = pd.read_csv(args.datapath, sep='\t', names=feature_names)
+    # Set dataset
+    if str(args.dataset) == 'ml-100k':
+        dataset_name = 'MovieLens 100K'
+    else:
+        dataset_name = 'MovieLens 1M'
 
-    # Set plot settings
-    plt.figure(figsize=(7 * 2 + 6, 12.5))
-    plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05, hspace=.01)
-    plt.style.use('dark_background')
-    plot_num = 1
+    # Load the MovieLens dataset (download it if needed),
+    data = Dataset.load_builtin(str(args.dataset))
 
-    datasets = (
-        (3, load_iris(return_X_y=True), "Iris"),
-        (2, load_breast_cancer(return_X_y=True), "Breast Cancer"),
-        (2, noisy_circles, "Noisy Circles")
+    # 80-20 split
+    train_dataset, test_dataset = train_test_split(data, test_size=.20, random_state=int(args.seed))
+
+    # Run Autoencoder
+    [a_mse, a_runtime] = autoencoder(str(args.dataset), logfile, int(args.seed))
+
+    # Set algorithms
+    user_based_msd_sim_options = {'name': 'msd', 'user_based': True}
+    user_based_pearson_baseline_sim_options = {'name': 'pearson_baseline', 'user_based': True}
+    user_based_msd_algo = KNNBasic(sim_options=user_based_msd_sim_options)
+    user_based_pearson_baseline_algo = KNNBasic(sim_options=user_based_pearson_baseline_sim_options)
+
+    item_based_sim_options = {'name': 'msd', 'user_based': False}
+    item_based_pearson_baseline_sim_options = {'name': 'pearson_baseline', 'user_based': False}
+    item_based_msd_algo = KNNBasic(sim_options=item_based_sim_options)
+    item_based_pearson_baseline_algo = KNNBasic(sim_options=item_based_pearson_baseline_sim_options)
+
+    algorithms = (
+        ("User MSD", user_based_msd_algo),
+        ("User Pearson Baseline", user_based_pearson_baseline_algo),
+        ("Item MSD", item_based_msd_algo),
+        ("Item Pearson Baseline", item_based_pearson_baseline_algo),
     )
 
-    # Traverse datasets
-    # High-level abstraction is from https://scikit-learn.org/stable/modules/clustering.html
-    for i, (n_clusters, dataset, dataset_name) in enumerate(datasets):
-        X, y = dataset
-
-        # Normalization of features for easier parameter selection
-        X = StandardScaler().fit_transform(X)
-
-        connectivity = kneighbors_graph(X, n_neighbors=10, include_self=False)
-        # connectivity = 0.5 * (connectivity + connectivity.T)  # Make connectivity symmetric
-
-        average_linkage = cluster.AgglomerativeClustering(
-            linkage="average",
-            affinity="cityblock",
-            n_clusters=n_clusters,
-            connectivity=connectivity)
-
-        ward_linkage = cluster.AgglomerativeClustering(
-            linkage="ward",
-            n_clusters=n_clusters)
-
-        complete_linkage = cluster.AgglomerativeClustering(
-            linkage="complete",
-            n_clusters=n_clusters)
-
-        single_linkage = cluster.AgglomerativeClustering(
-            linkage="single",
-            n_clusters=n_clusters)
-
-        k_means = cluster.KMeans(n_clusters=n_clusters)
-
-        gaussian_mixture = mixture.GaussianMixture(
-            n_components=n_clusters,
-            covariance_type='full')
-
-        # Set techniques
-        techniques = (
-            ('Agglomerative Avg', average_linkage),
-            ('Agglomerative Single', single_linkage),
-            ('Agglomerative Complete', complete_linkage),
-            ('Agglomerative Ward', ward_linkage),
-            ('kMeans', k_means),
-            ('GaussianMixture', gaussian_mixture),
-        )
-
-        for name, technique in techniques:
-            log(logfile, dataset_name + ", " + name)
-
-            time_start = time.time()
-
-            # Catch warnings related to kneighbors_graph
-            with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    "ignore",
-                    message="the number of connected components of the " +
-                            "connectivity matrix is [0-9]{1,2}" +
-                            " > 1. Completing it to avoid stopping the tree early.",
-                    category=UserWarning)
-                warnings.filterwarnings(
-                    "ignore",
-                    message="Graph is not fully connected, spectral embedding" +
-                            " may not work as expected.",
-                    category=UserWarning)
-                technique.fit(X)
-
-            time_stop = time.time()
-
-            # Predictions
-            if hasattr(technique, 'labels_'):
-                y_pred = technique.labels_.astype(np.int)
-            else:
-                y_pred = technique.predict(X)
-
-            # Entropy metric
-            true_cluster_labels = [y[get_cluster_indices(c, y_pred)] for c in range(n_clusters)]
-            overall_entropy = get_overall_entropy(true_cluster_labels, y.shape[0])
-
-            # F-Score metric
-            f1_score = metrics.f1_score(y, y_pred, average='weighted')
-
-            log(logfile, "\tOverall entropy: " + str(round(overall_entropy, 3)))
-            log(logfile, "\tF1 Score: " + str(round(f1_score, 3)))
-
-            # Plotting
-            plt.subplot(len(datasets), len(techniques), plot_num)
-            if i == 0:
-                plt.title("{}".format(name), size=15)
-
-            colors = np.array(list(islice(cycle(['#377eb8', '#ff7f00', '#4daf4a']), int(max(y_pred) + 1))))
-            colors = np.append(colors, ["#000000"])  # Add black color for outliers (if any)
-            plt.scatter(X[:, 0], X[:, 1], s=10, color=colors[y_pred], alpha=0.60)
-
-            plt.xlim(-2.5, 2.5)
-            plt.ylim(-2.5, 2.5)
-            plt.xticks(())
-            plt.yticks(())
-
-            plt.text(.15, .01, ('%.2fs' % (time_stop - time_start)).lstrip('0'),
-                     transform=plt.gca().transAxes, size=15,
-                     horizontalalignment='right')
-
-            plt.text(.99, .07, ('%.2f' % (overall_entropy)).lstrip('0'),
-                     transform=plt.gca().transAxes, size=15,
-                     horizontalalignment='right')
-            plt.text(.99, .01, ('%.2f' % (f1_score)).lstrip('0'),
-                     transform=plt.gca().transAxes, size=15,
-                     horizontalalignment='right')
-
-            plot_num += 1
-
     # Plotting
+    plt.style.use('dark_background')
+    fig, ax = plt.subplots()
+
+    # Autoencoder results
+    runtimes = [a_runtime]
+    mses = [a_mse]
+    # ax.annotate("Autoencoder", (runtimes[0] + .001, mses[0] + .001))
+
+    # Running
+    for name, algorithm in algorithms:
+        log(logfile, dataset_name + ", " + name)
+
+        # Train
+        time_start = time.time()
+        algorithm.fit(train_dataset)
+        time_stop = time.time()
+        log(logfile, 'Train time: {0:f}'.format(round(time_stop - time_start, 2)).strip('0'))
+
+        # Test
+        time_start = time.time()
+        predictions = algorithm.test(test_dataset)
+        time_stop = time.time()
+        runtime = round(time_stop - time_start, 2)
+        runtimes += [runtime]
+        log(logfile, 'Test time: {0:f}'.format(runtime).strip('0'))
+
+        # MSE metric
+        mse = accuracy.mse(predictions, verbose=False)
+        mses += [mse]
+        log(logfile, 'MSE: {0:1.4f}\n'.format(mse))
+
+    # Draw scatter plot
+    ax.scatter(runtimes[1:], mses[1:], marker='x', color='red')
+    # ax.scatter(runtimes, mses, marker='x', color='red')
+
+    # Annotate scatter plot, i=0 is for Autoencoder
+    for i, (name, _) in enumerate(algorithms):
+        ax.annotate(name, (runtimes[i + 1] + .001, mses[i + 1] + .001))
+
+    # Set plot settings
+    plt.title("{}".format(dataset_name), size=15)
+    plt.xlabel('Runtime (s)')
+    plt.ylabel('MSE')
+
+    # Save plot
     plt.savefig(outdir + 'plot.png', bbox_inches='tight')
 
 

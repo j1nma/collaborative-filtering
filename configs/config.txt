@@ -1,6 +1,6 @@
---datapath
-data/ml-100k/u.data
+--dataset
+ml-1m
 --seed
 1910299034
 --outdir
-results/ml-100k/
+results/
